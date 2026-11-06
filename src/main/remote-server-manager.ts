@@ -1539,6 +1539,8 @@ export class RemoteServerManager extends EventEmitter<RemoteServerEvents> {
       this.#scheduleHostedStartRead(serverId);
     }
     this.#events.setHostStarting(serverId, true);
+    // Signal holds the next attempt until the host connects, so the connection starts at once.
+    this.#webrtcTransport?.setWaitForHost(serverId, true);
     const sleepChanged = this.#connections.setHostedSleep(serverId, "waking");
     const step = (server && hostedStartStep(server)) ?? this.#connections.statusFor(serverId).hostedStart?.step;
     if (this.#applyHostedStartStep(serverId, step ?? "machine") || sleepChanged) this.#emitChanged();
@@ -1715,6 +1717,7 @@ export class RemoteServerManager extends EventEmitter<RemoteServerEvents> {
     this.#hostedRunningSince.delete(serverId);
     this.#hostedFailedReads.delete(serverId);
     this.#connections.setHostedStart(serverId, null);
+    this.#webrtcTransport?.setWaitForHost(serverId, false);
   }
 
   #expireHostedStart(serverId: string): void {
